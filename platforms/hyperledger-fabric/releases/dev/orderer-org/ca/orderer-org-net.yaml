@@ -1,0 +1,56 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: orderer-org-net-ca
+  namespace: orderer-org-net
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  interval: 1m
+  releaseName: orderer-org-net-ca
+  chart:
+    spec:
+      interval: 1m
+      sourceRef:
+        kind: GitRepository
+        name: flux-dev
+        namespace: flux-dev
+      chart: platforms/hyperledger-fabric/charts/fabric-ca-server   
+  values:
+    deployment:
+      annotations:
+    annotations:  
+      service:
+      pvc:
+    metadata:
+      namespace: orderer-org-net
+      images:
+        alpineutils: ghcr.io/hyperledger/bevel-alpine:latest
+        ca: ghcr.io/hyperledger/bevel-fabric-ca:latest
+    server:
+      name: ca
+      tlsstatus: true
+      admin: orderer-org-admin
+        
+    storage:
+      storageclassname: orderer-org-bevel-storageclass
+      storagesize: 512Mi 
+    vault:
+      role: vault-role
+      address: http://adbde8a360a8a4d9787795bd403b733c-2106722661.us-east-1.elb.amazonaws.com:20001
+      authpath: devorderer-org
+      secretcert: orderer_org_secrets/data/orderer-org/ordererOrganizations/orderer-org-net/ca?ca.orderer-org-net-cert.pem
+      secretkey: orderer_org_secrets/data/orderer-org/ordererOrganizations/orderer-org-net/ca?orderer-org-net-CA.key
+      secretadminpass: orderer_org_secrets/data/orderer-org/credentials/orderer-org-net/ca/orderer-org?user
+      serviceaccountname: vault-auth
+      type: hashicorp
+      imagesecretname: ""
+    service:
+      servicetype: ClusterIP
+      ports:
+        tcp:
+          clusteripport: 7054
+    proxy:
+      provider: none
+      type: orderer
+      external_url_suffix: org1proxy.fabric.theprovenancechain.net
