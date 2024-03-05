@@ -1,0 +1,72 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: orderer-org-net-ca-tools
+  namespace: orderer-org-net
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  interval: 1m
+  releaseName: orderer-org-net-ca-tools
+  chart:
+    spec:
+      interval: 1m
+      sourceRef:
+        kind: GitRepository
+        name: flux-dev
+        namespace: flux-dev
+      chart: platforms/hyperledger-fabric/charts/fabric-catools
+  values:
+    metadata:
+      namespace: orderer-org-net
+      name: ca-tools
+      component_type: orderer
+      org_name: orderer-org
+      proxy: none
+    annotations:  
+      service:
+      pvc:
+      deployment:
+    replicaCount: 1
+
+    image:
+      alpineutils: ghcr.io/hyperledger/bevel-alpine:latest
+      catools: ghcr.io/hyperledger/bevel-fabric-ca-tools:1.2.1
+      pullPolicy: IfNotPresent
+    
+    storage:
+      storageclassname: orderer-org-bevel-storageclass
+      storagesize: 512Mi
+    
+    vault:
+      role: vault-role
+      address: http://adbde8a360a8a4d9787795bd403b733c-2106722661.us-east-1.elb.amazonaws.com:20001
+      authpath: devorderer-org
+      secretusers: orderer_org_secrets/data/orderer-org/ordererOrganizations/orderer-org-net/users
+      secretorderer: orderer_org_secrets/data/orderer-org/ordererOrganizations/orderer-org-net/orderers
+      secretpeer: orderer_org_secrets/data/orderer-org/ordererOrganizations/orderer-org-net/peers
+      secretpeerorderertls: orderer_org_secrets/data/orderer-org/ordererOrganizations/orderer-org-net/orderer/tls
+      secretcert: orderer_org_secrets/data/orderer-org/ordererOrganizations/orderer-org-net/ca?ca.orderer-org-net-cert.pem
+      secretkey: orderer_org_secrets/data/orderer-org/ordererOrganizations/orderer-org-net/ca?orderer-org-net-CA.key
+      secretcouchdb: orderer_org_secrets/data/orderer-org/credentials/orderer-org-net/couchdb/orderer-org
+      secretconfigfile: orderer_org_secrets/data/orderer-org/ordererOrganizations/orderer-org-net/msp/config
+      serviceaccountname: vault-auth
+      type: hashicorp
+      imagesecretname: ""
+    
+    healthcheck: 
+      retries: 10
+      sleepTimeAfterError: 2
+
+    
+    org_data:
+      external_url_suffix: org1proxy.fabric.theprovenancechain.net
+      component_subject: O=Orderer,OU=Orderer,L=Seattle,C=US
+      cert_subject: O=Orderer/OU=Orderer/L=Seattle/C=US
+      component_country: US
+      component_state: Washington
+      component_location: Seattle
+      ca_url: ca.orderer-org-net.org1proxy.fabric.theprovenancechain.net
+
+    orderers:
+      name: orderer1-
